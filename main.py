@@ -9,12 +9,11 @@ def setup_openai():
     openai.api_key = api_key
 
 def interact_with_gpt3(prompt, max_tokens=50):
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt,
-        max_tokens=max_tokens
+    response = openai.ChatCompletion.create(
+        model="gpt-4-0613",
+        messages=[{"role": "user", "content": prompt}]
     )
-    return response['choices'][0]['text'].strip()
+    return response['choices'][0]['message']['content'].strip()
 
 def main():
     setup_openai()
