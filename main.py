@@ -1,6 +1,13 @@
-import argparse
 import openai
 import os
+import sys
+import argparse
+
+# MODEL="gpt-3.5-turbo"
+MODEL="gpt-4-0613"
+
+def concatenate_arguments(*args):
+    return ' '.join(map(str, args))
 
 def setup_openai():
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -10,7 +17,7 @@ def setup_openai():
 
 def interact_with_gpt3(prompt, max_tokens=50):
     response = openai.ChatCompletion.create(
-        model="gpt-4-0613",
+        model=MODEL,
         messages=[{"role": "user", "content": prompt}]
     )
     return response['choices'][0]['message']['content'].strip()
@@ -18,7 +25,15 @@ def interact_with_gpt3(prompt, max_tokens=50):
 def main():
     setup_openai()
 
+    arguments = sys.argv[1:]
+    result = concatenate_arguments(*arguments)
+
+    if result:
+        response = interact_with_gpt3(prompt=result)
+        return print(response)
+    
     print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation.")
+    
     while True:
         user_input = input("You: ")
         if user_input.lower() == 'exit':
