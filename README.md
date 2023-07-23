@@ -4,7 +4,7 @@
 Start by cloning our repository to your local system using the git command:
 
 ```sh
-git clone https://github.com/ljsimpkin/my-chat-cli.git
+git clone https://github.com/ljsimpkin/chat-gpt-cli-tool.git
 ```
 
 ## Step 2: Install Dependencies
