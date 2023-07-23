@@ -47,3 +47,6 @@ Congratulations! You are all set.
 __IMPORTANT:__ Please make sure to keep your `OPENAI_API_KEY` secure and do not commit it in your code or upload it to GitHub. 
 
 Enjoy using our project!
+
+# Todo
+[] Create a -c flag that will instruct the ai to only output code
