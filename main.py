@@ -15,7 +15,7 @@ def setup_openai():
         raise ValueError("Please set the OPENAI_API_KEY environmental variable.")
     openai.api_key = api_key
 
-def interact_with_gpt3(prompt, max_tokens=50):
+def interact_with_gpt(prompt, max_tokens=50):
     response = openai.ChatCompletion.create(
         model=MODEL,
         messages=[{"role": "user", "content": prompt}]
@@ -26,10 +26,10 @@ def main():
     setup_openai()
 
     arguments = sys.argv[1:]
-    result = concatenate_arguments(*arguments)
+    prompt_args = concatenate_arguments(*arguments)
 
-    if result:
-        response = interact_with_gpt3(prompt=result)
+    if prompt_args:
+        response = interact_with_gpt(prompt=prompt_args)
         return print(response)
     
     print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation.")
@@ -39,7 +39,7 @@ def main():
         if user_input.lower() == 'exit':
             break
 
-        response = interact_with_gpt3(prompt=user_input)
+        response = interact_with_gpt(prompt=user_input)
         print("ChatGPT:", response)
 
 if __name__ == "__main__":
