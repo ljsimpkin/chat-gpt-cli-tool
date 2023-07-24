@@ -3,8 +3,8 @@ import os
 import sys
 import argparse
 
-# MODEL="gpt-3.5-turbo"
-MODEL="gpt-4-0613"
+MODEL="gpt-3.5-turbo"
+#MODEL="gpt-4-0613"
 
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
@@ -32,7 +32,7 @@ def main():
         response = interact_with_gpt(prompt=prompt_args)
         return print(response)
     
-    print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation.")
+    print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL)
     
     while True:
         user_input = input("You: ")
