@@ -2,6 +2,7 @@ import openai
 import os
 import sys
 import argparse
+from colorama import Fore, Style
 
 # MODEL="gpt-3.5-turbo"
 MODEL="gpt-4-0613"
@@ -40,7 +41,7 @@ def main():
             break
 
         response = interact_with_gpt(prompt=user_input)
-        print("ChatGPT:", response)
+        print(Fore.GREEN + "ChatGPT:", response + Style.RESET_ALL)
 
 if __name__ == "__main__":
     main()
