@@ -41,7 +41,7 @@ def main():
             break
 
         response = interact_with_gpt(prompt=user_input)
-        print(Fore.GREEN + "ChatGPT:", response + Style.RESET_ALL)
+        print(Fore.GREEN + "ChatGPT: " + response + Style.RESET_ALL)
 
 if __name__ == "__main__":
     main()
