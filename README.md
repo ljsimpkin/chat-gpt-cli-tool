@@ -40,10 +40,10 @@ python3 your_script.py
 ```
 This should start the execution of the script.
 
-You can also use the `-c` flag to instruct the AI to only output code:
+You can also use the `-c` flag followed by your prompt to instruct the AI to generate a response immediately:
 
 ```sh
-python3 your_script.py -c "your code generation prompt"
+python3 your_script.py -c "your prompt"
 ```
 
 And the `-m` flag to switch to the gpt-4 model:
@@ -51,6 +51,13 @@ And the `-m` flag to switch to the gpt-4 model:
 ```sh
 python3 your_script.py -m
 ```
+
+To start a conversation with the AI, simply run the script without any flags or arguments:
+
+```sh
+python3 your_script.py
+```
+You will be prompted to enter your input. Type 'exit' to end the conversation.
 
 Congratulations! You are all set.
 
