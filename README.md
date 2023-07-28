@@ -40,6 +40,18 @@ python3 your_script.py
 ```
 This should start the execution of the script.
 
+You can also use the `-c` flag to instruct the AI to only output code:
+
+```sh
+python3 your_script.py -c "your code generation prompt"
+```
+
+And the `-m` flag to switch to the gpt-4 model:
+
+```sh
+python3 your_script.py -m
+```
+
 Congratulations! You are all set.
 
 <span style="color:blue">*__NOTE__:</span> For these changes to take effect, you might need to close and reopen your command line session or reboot your machine.
@@ -47,6 +59,3 @@ Congratulations! You are all set.
 __IMPORTANT:__ Please make sure to keep your `OPENAI_API_KEY` secure and do not commit it in your code or upload it to GitHub. 
 
 Enjoy using our project!
-
-# Todo
-[] Create a -c flag that will instruct the ai to only output code
