@@ -33,7 +33,7 @@ def main():
         response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}])
         return print(response)
     
-    print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation.")
+    print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL)
     
     conversation = []
     while True:
