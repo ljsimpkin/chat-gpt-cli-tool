@@ -4,8 +4,8 @@ import sys
 import argparse
 from colorama import Fore, Style
 
-# MODEL="gpt-3.5-turbo"
-MODEL="gpt-4-0613"
+MODEL="gpt-3.5-turbo"
+#MODEL="gpt-4-0613"
 
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
