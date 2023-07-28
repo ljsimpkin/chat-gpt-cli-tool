@@ -29,14 +29,16 @@ def interact_with_gpt(messages):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", action="store_true", help="Print 'Hello, World!' and exit")
+    parser.add_argument("-c", nargs="*", help="Send text to ChatGPT and print the response")
     parser.add_argument("text", nargs="*", help="Text to send to ChatGPT")
     args = parser.parse_args()
 
     setup_openai()
 
     if args.c:
-        print("Hello, World!")
+        prompt_args = concatenate_arguments(*args.c)
+        response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}])
+        print(response)
         return
 
     prompt_args = concatenate_arguments(*args.text)
