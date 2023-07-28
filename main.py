@@ -9,6 +9,9 @@ MODEL="gpt-3.5-turbo"
 MAX_TOKENS=256
 TEMPERATURE=1
 
+#CODE_FLAG="only output code in plain text and no descriptions"
+CODE_FLAG="You are a code generation assistant that only responds with raw code. Do not format it with tripple backticks. only output the code and nothing else. don't include any explanations"
+
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
 
@@ -37,7 +40,9 @@ def main():
 
     if args.c:
         prompt_args = concatenate_arguments(*args.c)
-        response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}])
+        
+        input=[{'role':'system', 'content':CODE_FLAG}, {"role": "user", "content": prompt_args}]
+        response = interact_with_gpt(messages=input)
         print(response)
         return
 
