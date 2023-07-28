@@ -6,6 +6,8 @@ from colorama import Fore, Style
 
 MODEL="gpt-3.5-turbo"
 #MODEL="gpt-4-0613"
+MAX_TOKENS=256
+TEMPERATURE=1
 
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
@@ -16,10 +18,12 @@ def setup_openai():
         raise ValueError("Please set the OPENAI_API_KEY environmental variable.")
     openai.api_key = api_key
 
-def interact_with_gpt(messages, max_tokens=50):
+def interact_with_gpt(messages):
     response = openai.ChatCompletion.create(
         model=MODEL,
-        messages=messages
+        messages=messages,
+        temperature=TEMPERATURE,
+        max_tokens=MAX_TOKENS,
     )
     return response['choices'][0]['message']['content'].strip()
 
