@@ -7,6 +7,7 @@ from colorama import Fore, Style
 MODEL="gpt-3.5-turbo"
 MAX_TOKENS=256
 TEMPERATURE=1
+
 CODE_FLAG="You are a code generation assistant that only responds with raw code. Do not format it with tripple backticks. only output the code and nothing else. don't include any explanations"
 
 def concatenate_arguments(*args):
@@ -36,7 +37,7 @@ def main():
 
     global MODEL
     if args.4:
-        MODEL = "hello"
+        MODEL = "gpt-4-0613"
 
     setup_openai()
 
