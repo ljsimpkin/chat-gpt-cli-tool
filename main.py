@@ -28,10 +28,17 @@ def interact_with_gpt(messages):
     return response['choices'][0]['message']['content'].strip()
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", action="store_true", help="Print 'Hello, World!' and exit")
+    args = parser.parse_args()
+
+    if args.c:
+        print("Hello, World!")
+        return
+
     setup_openai()
 
-    arguments = sys.argv[1:]
-    prompt_args = concatenate_arguments(*arguments)
+    prompt_args = concatenate_arguments(*args)
 
     if prompt_args:
         response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}])
