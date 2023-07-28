@@ -5,7 +5,6 @@ import argparse
 from colorama import Fore, Style
 
 MODEL="gpt-3.5-turbo"
-#MODEL="gpt-4-0613"
 MAX_TOKENS=256
 TEMPERATURE=1
 CODE_FLAG="You are a code generation assistant that only responds with raw code. Do not format it with tripple backticks. only output the code and nothing else. don't include any explanations"
@@ -31,8 +30,13 @@ def interact_with_gpt(messages):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Send text to ChatGPT and print the response")
+    parser.add_argument("-4", action="store_true", help="Toggle model to 'hello'")
     parser.add_argument("text", nargs="*", help="Text to send to ChatGPT")
     args = parser.parse_args()
+
+    global MODEL
+    if args.4:
+        MODEL = "hello"
 
     setup_openai()
 
