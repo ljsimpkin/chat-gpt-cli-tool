@@ -43,8 +43,8 @@ def main():
 
     if args.c:
         prompt_args = concatenate_arguments(*args.c)
-        input=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
-        response = interact_with_gpt(messages=input)
+        input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
+        response = interact_with_gpt(messages=input_messages)
         print(response)
         return
 
