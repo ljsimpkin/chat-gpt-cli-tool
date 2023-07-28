@@ -30,20 +30,22 @@ def interact_with_gpt(messages):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", action="store_true", help="Print 'Hello, World!' and exit")
+    parser.add_argument("text", nargs="*", help="Text to send to ChatGPT")
     args = parser.parse_args()
+
+    setup_openai()
 
     if args.c:
         print("Hello, World!")
         return
 
-    setup_openai()
-
-    prompt_args = concatenate_arguments(*args)
+    prompt_args = concatenate_arguments(*args.text)
 
     if prompt_args:
         response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}])
-        return print(response)
-    
+        print(response)
+        return
+
     print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL)
     
     conversation = []
