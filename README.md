@@ -40,7 +40,7 @@ python3 your_script.py
 ```
 This should start the execution of the script.
 
-You can also use the `-c` flag followed by your prompt to instruct the AI to generate a response immediately:
+You can also use the `-c` flag followed by your prompt to instruct the AI to generate code and only code:
 
 ```sh
 python3 your_script.py -c "your prompt"
