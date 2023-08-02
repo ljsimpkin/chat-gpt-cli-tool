@@ -32,7 +32,7 @@ def interact_with_gpt(messages):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", nargs="*", help="Send text to ChatGPT and print the response")
+    parser.add_argument("-c", "--code", nargs="*", help="Send text to ChatGPT and print the response")
     parser.add_argument("-m", "--model", action="store_true", help="Toggle model to 'gpt-4-0613'")
     parser.add_argument("text", nargs="*", help="Text to send to ChatGPT")
     args = parser.parse_args()
