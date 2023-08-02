@@ -1,6 +1,5 @@
 import openai
 import os
-import sys
 import argparse
 from colorama import Fore, Style
 from prompt_toolkit import prompt
