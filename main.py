@@ -3,7 +3,7 @@ import os
 import sys
 import argparse
 from colorama import Fore, Style
-from prompt_toolkit import prompt
+from prompt_toolkit import prompt, History
 
 MODEL="gpt-3.5-turbo"
 MAX_TOKENS=256
@@ -59,8 +59,9 @@ def main():
     print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL)
     
     conversation = []
+    history = History()
     while True:
-        user_input = prompt("You: ")
+        user_input = prompt("You: ", history=history)
         if user_input.lower() == 'exit':
             break
 
