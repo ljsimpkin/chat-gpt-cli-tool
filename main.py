@@ -3,6 +3,7 @@ import os
 import sys
 import argparse
 from colorama import Fore, Style
+from prompt_toolkit import prompt
 
 MODEL="gpt-3.5-turbo"
 MAX_TOKENS=256
@@ -59,7 +60,7 @@ def main():
     
     conversation = []
     while True:
-        user_input = input("You: ")
+        user_input = prompt("You: ")
         if user_input.lower() == 'exit':
             break
 

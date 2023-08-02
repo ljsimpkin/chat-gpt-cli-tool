@@ -1,3 +1,4 @@
 openai
 argparse
 colorama
+prompt_toolkit
