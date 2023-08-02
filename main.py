@@ -57,7 +57,7 @@ def main():
         print(response)
         return
 
-    print(Fore.BLACK, "Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL + Style.RESET_ALL)
+    print(Fore.BLACK + "Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL + Style.RESET_ALL)
     
     conversation = []
     history = InMemoryHistory()
