@@ -3,7 +3,8 @@ import os
 import sys
 import argparse
 from colorama import Fore, Style
-from prompt_toolkit import prompt, History
+from prompt_toolkit import prompt
+from prompt_toolkit.history import History
 
 MODEL="gpt-3.5-turbo"
 MAX_TOKENS=256
