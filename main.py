@@ -57,7 +57,7 @@ def main():
         print(response)
         return
 
-    print("Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL)
+    print(Fore.BLACK, "Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL + Style.RESET_ALL)
     
     conversation = []
     history = InMemoryHistory()
@@ -69,7 +69,7 @@ def main():
         conversation.append({"role": "user", "content": user_input})
         response = interact_with_gpt(messages=conversation)
         conversation.append({"role": "assistant", "content": response})
-        print(Fore.GREEN + "ChatGPT: " + response + Style.RESET_ALL)
+        print(Fore.YELLOW + "ChatGPT: " + response + Style.RESET_ALL)
 
 if __name__ == "__main__":
     main()
