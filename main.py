@@ -8,7 +8,7 @@ from prompt_toolkit.history import InMemoryHistory
 client = OpenAI()
 
 MODEL="gpt-3.5-turbo"
-MAX_TOKENS=256
+MAX_TOKENS=None
 TEMPERATURE=1
 
 CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks. Output only the code and nothing else."
