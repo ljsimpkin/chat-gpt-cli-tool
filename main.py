@@ -61,7 +61,10 @@ def setup_google():
                                   safety_settings=safety_settings)
 
 def interact_with_gpt(messages):
-    if USE_GOOGLE:
+    print("expect to be true")
+    print (USE_GOOGLE)
+    if True:
+        print("google")
         convo = model.start_chat(history=messages)
         convo.send_message(messages[-1]["content"])
         return convo.last.text
@@ -88,6 +91,7 @@ def main():
 
     if args.google:
         USE_GOOGLE = True
+        print("using Google")
         setup_google()
     else:
         setup_openai()
