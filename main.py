@@ -8,6 +8,7 @@ from prompt_toolkit.history import InMemoryHistory
 client = OpenAI()
 
 MODEL="gpt-3.5-turbo"
+MODEL_4="gpt-4-0125-preview"
 MAX_TOKENS=None
 TEMPERATURE=1
 
@@ -34,13 +35,13 @@ def interact_with_gpt(messages):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Output")
-    parser.add_argument("-m", "--model", action="store_true", help="Toggle model to 'gpt-4-1106-preview'")
+    parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
     parser.add_argument("text", nargs="*", help="Text to send to ChatGPT")
     args = parser.parse_args()
 
     global MODEL
     if args.model:
-        MODEL = "gpt-4-1106-preview"
+        MODEL = MODEL_4
 
     setup_openai()
 
@@ -74,3 +75,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
