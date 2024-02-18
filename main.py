@@ -1,4 +1,5 @@
 from openai import OpenAI
+import google.generativeai as genai
 import os
 import argparse
 from colorama import Fore, Style
@@ -11,6 +12,7 @@ MODEL="gpt-3.5-turbo"
 MODEL_4="gpt-4-0125-preview"
 MAX_TOKENS=None
 TEMPERATURE=1
+USE_GOOGLE=False
 
 CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks. Output only the code and nothing else."
 
@@ -24,18 +26,24 @@ def setup_openai():
     client.api_key = api_key
 
 def interact_with_gpt(messages):
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        temperature=TEMPERATURE,
-        max_tokens=MAX_TOKENS,
-    )
-    return response.choices[0].message.content
+    if USE_GOOGLE:
+        convo = model.start_chat(history=messages)
+        convo.send_message(messages[-1]["content"])
+        return convo.last.text
+    else:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
+        )
+        return response.choices[0].message.content
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Output")
     parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
+    parser.add_argument("-g", "--google", action="store_true", help="Toggle to use Google's API")
     parser.add_argument("text", nargs="*", help="Text to send to ChatGPT")
     args = parser.parse_args()
 
@@ -43,7 +51,11 @@ def main():
     if args.model:
         MODEL = MODEL_4
 
-    setup_openai()
+    if args.google:
+        USE_GOOGLE = True
+        setup_google()
+    else:
+        setup_openai()
 
     if args.c:
         prompt_args = concatenate_arguments(*args.c)
@@ -76,49 +88,37 @@ def main():
 if __name__ == "__main__":
     main()
 
-"""
-At the command line, only need to run once to install the package via pip:
+def setup_google():
+    genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
-$ pip install google-generativeai
-"""
+    # Set up the model
+    generation_config = {
+      "temperature": 0.9,
+      "top_p": 1,
+      "top_k": 1,
+      "max_output_tokens": 2048,
+    }
 
-import google.generativeai as genai
+    safety_settings = [
+      {
+        "category": "HARM_CATEGORY_HARASSMENT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        "category": "HARM_CATEGORY_HATE_SPEECH",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+      },
+    ]
 
-genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-
-# Set up the model
-generation_config = {
-  "temperature": 0.9,
-  "top_p": 1,
-  "top_k": 1,
-  "max_output_tokens": 2048,
-}
-
-safety_settings = [
-  {
-    "category": "HARM_CATEGORY_HARASSMENT",
-    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-  },
-  {
-    "category": "HARM_CATEGORY_HATE_SPEECH",
-    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-  },
-  {
-    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-  },
-  {
-    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-  },
-]
-
-model = genai.GenerativeModel(model_name="gemini-1.0-pro",
-                              generation_config=generation_config,
-                              safety_settings=safety_settings)
-
-convo = model.start_chat(history=[
-])
-
-convo.send_message("YOUR_USER_INPUT")
-print(convo.last.text)
+    global model
+    model = genai.GenerativeModel(model_name="gemini-1.0-pro",
+                                  generation_config=generation_config,
+                                  safety_settings=safety_settings)
