@@ -37,19 +37,19 @@ def interact_with_gpt(messages):
     return response.choices[0].message.content
 
 def ask_execute_command(command):
-    print(f"\nDo you want to execute this command in bash? (Press 'y' to execute, any other key to cancel)")
+    print(f"\nDo you want to execute this command in bash? (Press 'y' or Enter to execute, any other key to cancel)")
     print(f"Command: {command}")
     
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
         tty.setraw(fd)
-        key = sys.stdin.read(1).lower()
+        key = sys.stdin.read(1)
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     
     print()  # Print a newline for better formatting
-    return key == 'y'
+    return key.lower() == 'y' or key == '\r'
 
 def main():
     parser = argparse.ArgumentParser()
