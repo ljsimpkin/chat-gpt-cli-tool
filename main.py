@@ -1,6 +1,7 @@
 from openai import OpenAI
 import os
 import argparse
+import subprocess
 from colorama import Fore, Style
 from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
@@ -32,6 +33,10 @@ def interact_with_gpt(messages):
     )
     return response.choices[0].message.content
 
+def ask_execute_command(command):
+    user_input = input(f"Do you want to execute this command in bash? (y/n): {command}\n")
+    return user_input.lower() == 'y'
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Output")
@@ -50,6 +55,11 @@ def main():
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages)
         print(response)
+        if ask_execute_command(response):
+            try:
+                subprocess.run(response, shell=True, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Command execution failed: {e}")
         return
 
     prompt_args = concatenate_arguments(*args.text)
