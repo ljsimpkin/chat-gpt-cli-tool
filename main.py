@@ -6,12 +6,8 @@ from colorama import Fore, Style
 from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
 import sys
-
-if sys.platform.startswith('win'):
-    import msvcrt
-else:
-    import termios
-    import tty
+import termios
+import tty
 
 client = OpenAI()
 
@@ -42,18 +38,15 @@ def interact_with_gpt(messages):
 
 def ask_execute_command(command):
     print(f"\nDo you want to execute this command in bash? (Press 'y' to execute, any other key to cancel)")
-    # print(f"Command: {command}")
+    print(f"Command: {command}")
     
-    if sys.platform.startswith('win'):
-        key = msvcrt.getch().decode('utf-8').lower()
-    else:
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            key = sys.stdin.read(1).lower()
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        key = sys.stdin.read(1).lower()
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     
     print()  # Print a newline for better formatting
     return key == 'y'
