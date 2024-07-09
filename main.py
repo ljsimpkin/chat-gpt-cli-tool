@@ -16,7 +16,8 @@ MODEL_4="gpt-4-0125-preview"
 MAX_TOKENS=None
 TEMPERATURE=1
 
-CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks. Output only the code and nothing else."
+# CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks. Output only the code and nothing else."
+CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the bash command in plain text format without tripple backricks. Output only the code and nothing else."
 
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
@@ -37,8 +38,7 @@ def interact_with_gpt(messages):
     return response.choices[0].message.content
 
 def ask_execute_command(command):
-    print(f"\nDo you want to execute this command in bash? (Press 'y' or Enter to execute, any other key to cancel)")
-    print(f"Command: {command}")
+    print(f"\nPress 'y' or 'Enter' to execute, any other key to cancel.\n")
     
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
@@ -48,7 +48,6 @@ def ask_execute_command(command):
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     
-    print()  # Print a newline for better formatting
     return key.lower() == 'y' or key == '\r'
 
 def main():
@@ -68,7 +67,7 @@ def main():
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages)
-        print(response)
+        print(Fore.RED + response + Style.RESET_ALL)
         if ask_execute_command(response):
             try:
                 subprocess.run(response, shell=True, check=True)
