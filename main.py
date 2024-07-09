@@ -41,8 +41,8 @@ def interact_with_gpt(messages):
     return response.choices[0].message.content
 
 def ask_execute_command(command):
-    print(f"Do you want to execute this command in bash? (Press 'y' to execute, any other key to cancel)")
-    print(f"Command: {command}")
+    print(f"\nDo you want to execute this command in bash? (Press 'y' to execute, any other key to cancel)")
+    # print(f"Command: {command}")
     
     if sys.platform.startswith('win'):
         key = msvcrt.getch().decode('utf-8').lower()
