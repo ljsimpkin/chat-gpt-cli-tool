@@ -16,8 +16,8 @@ MODEL_4="gpt-4-0125-preview"
 MAX_TOKENS=None
 TEMPERATURE=1
 
-# CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks. Output only the code and nothing else."
-CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the bash command in plain text format without tripple backricks. Output only the code and nothing else."
+CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks. Output only the code and nothing else."
+BASH_FLAG="You are a code generation assistant that only responds with raw code. Respond with the bash command in plain text format without tripple backricks. Output only the code and nothing else."
 
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
@@ -53,6 +53,7 @@ def ask_execute_command(command):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Output")
+    parser.add_argument("-b", nargs="*", help="Output")
     parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
     parser.add_argument("text", nargs="*", help="Text to send to ChatGPT")
     args = parser.parse_args()
@@ -66,6 +67,18 @@ def main():
     if args.c:
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
+        response = interact_with_gpt(messages=input_messages)
+        print(Fore.RED + response + Style.RESET_ALL)
+        if ask_execute_command(response):
+            try:
+                subprocess.run(response, shell=True, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Command execution failed: {e}")
+        return
+
+    if args.b:
+        prompt_args = concatenate_arguments(*args.b)
+        input_messages=[{'role':'system', 'content': BASH_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages)
         print(Fore.RED + response + Style.RESET_ALL)
         if ask_execute_command(response):
