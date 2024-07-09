@@ -68,12 +68,7 @@ def main():
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages)
-        print(Fore.RED + response + Style.RESET_ALL)
-        if ask_execute_command(response):
-            try:
-                subprocess.run(response, shell=True, check=True)
-            except subprocess.CalledProcessError as e:
-                print(f"Command execution failed: {e}")
+        print(response)
         return
 
     if args.b:
