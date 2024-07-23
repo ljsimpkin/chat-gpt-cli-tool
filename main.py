@@ -84,7 +84,7 @@ def main():
             pyperclip.copy(response)
             print("\nCopied to clipboard!")
         except pyperclip.PyperclipException:
-            print(Fore.RED + "Failed to copy to clipboard. Make sure you have the required dependencies installed." + Style.RESET_ALL)
+            print(Fore.RED + "\nFailed to copy to clipboard. Make sure you have the required dependencies installed." + Style.RESET_ALL)
         return
 
     prompt_args = concatenate_arguments(*args.text)
