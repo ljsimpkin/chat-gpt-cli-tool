@@ -39,7 +39,7 @@ def interact_with_gpt(messages, use_claude=False):
     if use_claude:
         # Convert OpenAI-style messages to Anthropic format
         anthropic_messages = []
-        system_message = None
+        system_message = ""
         for msg in messages:
             if msg['role'] == 'system':
                 system_message = msg['content']
