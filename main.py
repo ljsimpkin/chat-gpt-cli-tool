@@ -37,9 +37,19 @@ def setup_api():
 
 def interact_with_gpt(messages, use_claude=False):
     if use_claude:
+        # Convert OpenAI-style messages to Anthropic format
+        anthropic_messages = []
+        system_message = None
+        for msg in messages:
+            if msg['role'] == 'system':
+                system_message = msg['content']
+            else:
+                anthropic_messages.append({"role": msg['role'], "content": msg['content']})
+        
         response = anthropic_client.messages.create(
             model=CLAUDE_MODEL,
-            messages=messages,
+            messages=anthropic_messages,
+            system=system_message,
             temperature=TEMPERATURE,
             max_tokens=MAX_TOKENS,
         )
