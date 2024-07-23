@@ -15,8 +15,8 @@ anthropic_client = Anthropic()
 
 MODEL="gpt-3.5-turbo"
 MODEL_4="gpt-4-0125-preview"
-CLAUDE_MODEL="claude-3-opus-20240229"
-MAX_TOKENS=None
+CLAUDE_MODEL="claude-3-sonnet-20240229"
+MAX_TOKENS=1000
 TEMPERATURE=1
 
 CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks. Output only the code and nothing else."
