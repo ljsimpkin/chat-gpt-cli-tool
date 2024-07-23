@@ -2,13 +2,9 @@ from openai import OpenAI
 from anthropic import Anthropic
 import os
 import argparse
-import subprocess
 from colorama import Fore, Style
 from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
-import sys
-import termios
-import tty
 import pyperclip
 
 openai_client = OpenAI()
@@ -20,8 +16,7 @@ CLAUDE_MODEL="claude-3-sonnet-20240229"
 MAX_TOKENS=1000
 TEMPERATURE=1
 
-CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks. Output only the code and nothing else."
-BASH_FLAG="You are a code generation assistant that only responds with raw code. Respond with the bash command in plain text format without tripple backricks. Output only the code and nothing else."
+CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks and without comments. Output only the code and nothing else."
 
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
@@ -67,7 +62,6 @@ def interact_with_gpt(messages, use_claude=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Output")
-    parser.add_argument("-b", nargs="*", help="Output")
     parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
     parser.add_argument("-a","--claude", action="store_true", help="Use Claude by Anthropic")
     parser.add_argument("text", nargs="*", help="Text to send to the AI model")
@@ -85,17 +79,10 @@ def main():
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages, use_claude=use_claude)
-        print(response)
-        return
-
-    if args.b:
-        prompt_args = concatenate_arguments(*args.b)
-        input_messages=[{'role':'system', 'content': BASH_FLAG}, {"role": "user", "content": prompt_args}]
-        response = interact_with_gpt(messages=input_messages, use_claude=use_claude)
-        print(Fore.YELLOW + response + Style.RESET_ALL)
+        print('\n' + Fore.YELLOW + response + Style.RESET_ALL)
         try:
             pyperclip.copy(response)
-            print(Fore.GREEN + "Response copied to clipboard!" + Style.RESET_ALL)
+            print("\nCopied to clipboard!")
         except pyperclip.PyperclipException:
             print(Fore.RED + "Failed to copy to clipboard. Make sure you have the required dependencies installed." + Style.RESET_ALL)
         return
