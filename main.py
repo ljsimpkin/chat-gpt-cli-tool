@@ -1,4 +1,5 @@
 from openai import OpenAI
+from anthropic import Anthropic
 import os
 import argparse
 import subprocess
@@ -9,10 +10,12 @@ import sys
 import termios
 import tty
 
-client = OpenAI()
+openai_client = OpenAI()
+anthropic_client = Anthropic()
 
 MODEL="gpt-3.5-turbo"
 MODEL_4="gpt-4-0125-preview"
+CLAUDE_MODEL="claude-3-opus-20240229"
 MAX_TOKENS=None
 TEMPERATURE=1
 
@@ -22,20 +25,33 @@ BASH_FLAG="You are a code generation assistant that only responds with raw code.
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
 
-def setup_openai():
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
+def setup_api():
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not openai_key:
         raise ValueError("Please set the OPENAI_API_KEY environmental variable.")
-    client.api_key = api_key
+    if not anthropic_key:
+        raise ValueError("Please set the ANTHROPIC_API_KEY environmental variable.")
+    openai_client.api_key = openai_key
+    anthropic_client.api_key = anthropic_key
 
-def interact_with_gpt(messages):
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        temperature=TEMPERATURE,
-        max_tokens=MAX_TOKENS,
-    )
-    return response.choices[0].message.content
+def interact_with_gpt(messages, use_claude=False):
+    if use_claude:
+        response = anthropic_client.messages.create(
+            model=CLAUDE_MODEL,
+            messages=messages,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
+        )
+        return response.content[0].text
+    else:
+        response = openai_client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
+        )
+        return response.choices[0].message.content
 
 def ask_execute_command(command):
     print(f"\nPress 'y' or 'Enter' to execute, any other key to cancel.\n")
@@ -55,26 +71,29 @@ def main():
     parser.add_argument("-c", nargs="*", help="Output")
     parser.add_argument("-b", nargs="*", help="Output")
     parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
-    parser.add_argument("text", nargs="*", help="Text to send to ChatGPT")
+    parser.add_argument("--claude", action="store_true", help="Use Claude by Anthropic")
+    parser.add_argument("text", nargs="*", help="Text to send to the AI model")
     args = parser.parse_args()
 
     global MODEL
     if args.model:
         MODEL = MODEL_4
 
-    setup_openai()
+    setup_api()
+
+    use_claude = args.claude
 
     if args.c:
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
-        response = interact_with_gpt(messages=input_messages)
+        response = interact_with_gpt(messages=input_messages, use_claude=use_claude)
         print(response)
         return
 
     if args.b:
         prompt_args = concatenate_arguments(*args.b)
         input_messages=[{'role':'system', 'content': BASH_FLAG}, {"role": "user", "content": prompt_args}]
-        response = interact_with_gpt(messages=input_messages)
+        response = interact_with_gpt(messages=input_messages, use_claude=use_claude)
         print(Fore.RED + response + Style.RESET_ALL)
         if ask_execute_command(response):
             try:
@@ -86,11 +105,12 @@ def main():
     prompt_args = concatenate_arguments(*args.text)
 
     if prompt_args:
-        response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}])
+        response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}], use_claude=use_claude)
         print(response)
         return
 
-    print(Fore.YELLOW + "Welcome to ChatGPT CLI. Type 'exit' to end the conversation. Using model: " + MODEL + Style.RESET_ALL)
+    model_name = CLAUDE_MODEL if use_claude else MODEL
+    print(Fore.YELLOW + f"Welcome to AI CLI. Type 'exit' to end the conversation. Using model: {model_name}" + Style.RESET_ALL)
     
     conversation = []
     history = InMemoryHistory()
@@ -100,9 +120,9 @@ def main():
             break
 
         conversation.append({"role": "user", "content": user_input})
-        response = interact_with_gpt(messages=conversation)
+        response = interact_with_gpt(messages=conversation, use_claude=use_claude)
         conversation.append({"role": "assistant", "content": response})
-        print(Fore.YELLOW + "ChatGPT: " + response + Style.RESET_ALL)
+        print(Fore.YELLOW + "AI: " + response + Style.RESET_ALL)
 
 if __name__ == "__main__":
     main()
