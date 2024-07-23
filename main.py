@@ -9,6 +9,7 @@ from prompt_toolkit.history import InMemoryHistory
 import sys
 import termios
 import tty
+import pyperclip
 
 openai_client = OpenAI()
 anthropic_client = Anthropic()
@@ -92,6 +93,11 @@ def main():
         input_messages=[{'role':'system', 'content': BASH_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages, use_claude=use_claude)
         print(Fore.YELLOW + response + Style.RESET_ALL)
+        try:
+            pyperclip.copy(response)
+            print(Fore.GREEN + "Response copied to clipboard!" + Style.RESET_ALL)
+        except pyperclip.PyperclipException:
+            print(Fore.RED + "Failed to copy to clipboard. Make sure you have the required dependencies installed." + Style.RESET_ALL)
         return
 
     prompt_args = concatenate_arguments(*args.text)

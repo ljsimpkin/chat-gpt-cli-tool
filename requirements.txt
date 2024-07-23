@@ -2,3 +2,4 @@ openai
 argparse
 colorama
 prompt_toolkit
+pyperclip
