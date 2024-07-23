@@ -63,25 +63,12 @@ def interact_with_gpt(messages, use_claude=False):
         )
         return response.choices[0].message.content
 
-def ask_execute_command(command):
-    print(f"\nPress 'y' or 'Enter' to execute, any other key to cancel.\n")
-    
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(fd)
-        key = sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    
-    return key.lower() == 'y' or key == '\r'
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Output")
     parser.add_argument("-b", nargs="*", help="Output")
     parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
-    parser.add_argument("--claude", action="store_true", help="Use Claude by Anthropic")
+    parser.add_argument("-a","--claude", action="store_true", help="Use Claude by Anthropic")
     parser.add_argument("text", nargs="*", help="Text to send to the AI model")
     args = parser.parse_args()
 
@@ -104,12 +91,7 @@ def main():
         prompt_args = concatenate_arguments(*args.b)
         input_messages=[{'role':'system', 'content': BASH_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages, use_claude=use_claude)
-        print(Fore.RED + response + Style.RESET_ALL)
-        if ask_execute_command(response):
-            try:
-                subprocess.run(response, shell=True, check=True)
-            except subprocess.CalledProcessError as e:
-                print(f"Command execution failed: {e}")
+        print(Fore.YELLOW + response + Style.RESET_ALL)
         return
 
     prompt_args = concatenate_arguments(*args.text)
