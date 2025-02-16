@@ -5,6 +5,7 @@ from colorama import Fore, Style
 from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
 import pyperclip
+import sys
 
 openai_client = OpenAI()
 
@@ -25,13 +26,22 @@ def setup_api():
     openai_client.api_key = openai_key
 
 def interact_with_gpt(messages):
-    response = openai_client.chat.completions.create(
+    stream = openai_client.chat.completions.create(
         model=MODEL,
         messages=messages,
         temperature=TEMPERATURE,
         max_tokens=MAX_TOKENS,
+        stream=True
     )
-    return response.choices[0].message.content
+    
+    collected_chunks = []
+    for chunk in stream:
+        if chunk.choices[0].delta.content:
+            chunk_content = chunk.choices[0].delta.content
+            print(chunk_content, end='', flush=True)
+            collected_chunks.append(chunk_content)
+    print()  # New line after streaming completes
+    return ''.join(collected_chunks)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -50,7 +60,8 @@ def main():
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages)
-        print('\n' + Fore.YELLOW + response + Style.RESET_ALL)
+        print(Fore.YELLOW + "\nGenerated code:" + Style.RESET_ALL)
+        print(Fore.YELLOW + response + Style.RESET_ALL)
         try:
             pyperclip.copy(response)
             print("\nCopied to clipboard!")
@@ -77,7 +88,7 @@ def main():
         conversation.append({"role": "user", "content": user_input})
         response = interact_with_gpt(messages=conversation)
         conversation.append({"role": "assistant", "content": response})
-        print(Fore.YELLOW + "AI: " + response + Style.RESET_ALL)
+        print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
 
 if __name__ == "__main__":
     main()
