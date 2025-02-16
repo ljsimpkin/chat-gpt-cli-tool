@@ -25,23 +25,32 @@ def setup_api():
         raise ValueError("Please set the OPENAI_API_KEY environmental variable.")
     openai_client.api_key = openai_key
 
-def interact_with_gpt(messages):
-    stream = openai_client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        temperature=TEMPERATURE,
-        max_tokens=MAX_TOKENS,
-        stream=True
-    )
-    
-    collected_chunks = []
-    for chunk in stream:
-        if chunk.choices[0].delta.content:
-            chunk_content = chunk.choices[0].delta.content
-            print(chunk_content, end='', flush=True)
-            collected_chunks.append(chunk_content)
-    print()  # New line after streaming completes
-    return ''.join(collected_chunks)
+def interact_with_gpt(messages, stream=False):
+    if stream:
+        stream_response = openai_client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
+            stream=True
+        )
+        
+        collected_chunks = []
+        for chunk in stream_response:
+            if chunk.choices[0].delta.content:
+                chunk_content = chunk.choices[0].delta.content
+                print(chunk_content, end='', flush=True)
+                collected_chunks.append(chunk_content)
+        print()  # New line after streaming completes
+        return ''.join(collected_chunks)
+    else:
+        response = openai_client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
+        )
+        return response.choices[0].message.content
 
 def main():
     parser = argparse.ArgumentParser()
@@ -59,7 +68,7 @@ def main():
     if args.c:
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
-        response = interact_with_gpt(messages=input_messages)
+        response = interact_with_gpt(messages=input_messages, stream=False)
         print(Fore.YELLOW + "\nGenerated code:" + Style.RESET_ALL)
         print(Fore.YELLOW + response + Style.RESET_ALL)
         try:
@@ -72,7 +81,7 @@ def main():
     prompt_args = concatenate_arguments(*args.text)
 
     if prompt_args:
-        response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}])
+        response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}], stream=False)
         print(response)
         return
 
@@ -86,7 +95,7 @@ def main():
             break
 
         conversation.append({"role": "user", "content": user_input})
-        response = interact_with_gpt(messages=conversation)
+        response = interact_with_gpt(messages=conversation, stream=True)
         conversation.append({"role": "assistant", "content": response})
         print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
 
