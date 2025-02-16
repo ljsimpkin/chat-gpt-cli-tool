@@ -8,8 +8,8 @@ import pyperclip
 
 openai_client = OpenAI()
 
-MODEL="gpt-3.5-turbo"
-MODEL_4="gpt-4-0125-preview"
+MODEL="gpt-4o-mini"
+MODEL_4="gpt-4o"
 MAX_TOKENS=1000
 TEMPERATURE=1
 
