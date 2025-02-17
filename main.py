@@ -39,7 +39,7 @@ def interact_with_gpt(messages, stream=False):
         for chunk in stream_response:
             if chunk.choices[0].delta.content:
                 chunk_content = chunk.choices[0].delta.content
-                print(chunk_content, end='', flush=True)
+                print(Fore.YELLOW + chunk_content, end='', flush=True)
                 collected_chunks.append(chunk_content)
         print()  # New line after streaming completes
         return ''.join(collected_chunks)
@@ -69,7 +69,6 @@ def main():
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
         response = interact_with_gpt(messages=input_messages, stream=False)
-        print(Fore.YELLOW + "\nGenerated code:" + Style.RESET_ALL)
         print(Fore.YELLOW + response + Style.RESET_ALL)
         try:
             pyperclip.copy(response)
@@ -95,9 +94,9 @@ def main():
             break
 
         conversation.append({"role": "user", "content": user_input})
+        print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
         response = interact_with_gpt(messages=conversation, stream=True)
         conversation.append({"role": "assistant", "content": response})
-        print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
 
 if __name__ == "__main__":
     main()
