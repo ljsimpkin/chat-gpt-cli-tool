@@ -99,8 +99,26 @@ def main():
             full_prompt = f"{prompt_args}\n\n{stdin_data}"
         else:
             full_prompt = stdin_data
-            
-        response = interact_with_gpt(messages=[{"role": "user", "content": full_prompt}], stream=True)
+        
+        # Initialize conversation with piped data
+        conversation = [{"role": "user", "content": full_prompt}]
+        print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
+        response = interact_with_gpt(messages=conversation, stream=True)
+        conversation.append({"role": "assistant", "content": response})
+        
+        # Continue with conversation mode
+        print(Fore.YELLOW + f"\nContinuing in conversation mode. Type 'exit' to end the conversation. Using model: {MODEL}" + Style.RESET_ALL)
+        history = InMemoryHistory()
+        while True:
+            user_input = prompt("You: ", history=history)
+            if user_input.lower() == 'exit':
+                break
+
+            conversation.append({"role": "user", "content": user_input})
+            print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
+            response = interact_with_gpt(messages=conversation, stream=True)
+            conversation.append({"role": "assistant", "content": response})
+        
         return
 
     if prompt_args:
