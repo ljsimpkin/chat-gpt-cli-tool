@@ -25,6 +25,14 @@ def setup_api():
         raise ValueError("Please set the OPENAI_API_KEY environmental variable.")
     openai_client.api_key = openai_key
 
+def check_stdin():
+    """Check if there's data being piped to stdin"""
+    return not sys.stdin.isatty()
+
+def read_stdin():
+    """Read all data from stdin"""
+    return sys.stdin.read().strip()
+
 def interact_with_gpt(messages, stream=False):
     if stream:
         stream_response = openai_client.chat.completions.create(
@@ -65,6 +73,11 @@ def main():
 
     setup_api()
 
+    # Check for piped input
+    stdin_data = None
+    if check_stdin():
+        stdin_data = read_stdin()
+
     if args.c:
         prompt_args = concatenate_arguments(*args.c)
         input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
@@ -78,6 +91,17 @@ def main():
         return
 
     prompt_args = concatenate_arguments(*args.text)
+
+    # Handle piped input combined with command line arguments
+    if stdin_data:
+        if prompt_args:
+            # Combine stdin data with command line arguments
+            full_prompt = f"{prompt_args}\n\n{stdin_data}"
+        else:
+            full_prompt = stdin_data
+            
+        response = interact_with_gpt(messages=[{"role": "user", "content": full_prompt}], stream=True)
+        return
 
     if prompt_args:
         response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}], stream=False)
