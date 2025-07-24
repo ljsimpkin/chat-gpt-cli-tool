@@ -15,9 +15,9 @@ MODEL_4 = "gpt-4o"
 MAX_TOKENS = 1000
 TEMPERATURE = 1
 
-CODE_FLAG = "You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without triple backticks and without comments. Output only the code and nothing else."
-
 HISTORY_FILE = ".ai_cli_history.json"
+
+CODE_FLAG = "You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without triple backticks and without comments. Output only the code and nothing else."
 
 
 def concatenate_arguments(*args):
@@ -112,7 +112,8 @@ def handle_conversation(conversation, stream=False):
     """Handles the conversation with the AI model."""
     while True:
         user_input = prompt("You: ", history=InMemoryHistory())
-        if user_input.lower() == 'exit':
+        if user_input.lower() == '/exit':
+            print("Exiting conversation.")
             break
 
         conversation.append({"role": "user", "content": user_input})
