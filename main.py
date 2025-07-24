@@ -109,15 +109,20 @@ def main():
         # Continue with conversation mode
         print(Fore.YELLOW + f"\nContinuing in conversation mode. Type 'exit' to end the conversation. Using model: {MODEL}" + Style.RESET_ALL)
         history = InMemoryHistory()
-        while True:
-            user_input = prompt("You: ", history=history)
-            if user_input.lower() == 'exit':
-                break
+        
+        # Check if stdin is a TTY before using prompt
+        if sys.stdin.isatty():
+            while True:
+                user_input = prompt("You: ", history=history)
+                if user_input.lower() == 'exit':
+                    break
 
-            conversation.append({"role": "user", "content": user_input})
-            print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
-            response = interact_with_gpt(messages=conversation, stream=True)
-            conversation.append({"role": "assistant", "content": response})
+                conversation.append({"role": "user", "content": user_input})
+                print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
+                response = interact_with_gpt(messages=conversation, stream=True)
+                conversation.append({"role": "assistant", "content": response})
+        else:
+            print(Fore.RED + "No interactive terminal available." + Style.RESET_ALL)
         
         return
 
