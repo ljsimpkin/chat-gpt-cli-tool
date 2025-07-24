@@ -6,18 +6,23 @@ from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
 import pyperclip
 import sys
+import json  # Import the json module
 
 openai_client = OpenAI()
 
-MODEL="gpt-4o-mini"
-MODEL_4="gpt-4o"
-MAX_TOKENS=1000
-TEMPERATURE=1
+MODEL = "gpt-4o-mini"
+MODEL_4 = "gpt-4o"
+MAX_TOKENS = 1000
+TEMPERATURE = 1
 
-CODE_FLAG="You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without tripple backricks and without comments. Output only the code and nothing else."
+CODE_FLAG = "You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without triple backticks and without comments. Output only the code and nothing else."
+
+HISTORY_FILE = ".ai_cli_history.json"
+
 
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
+
 
 def setup_api():
     openai_key = os.environ.get("OPENAI_API_KEY")
@@ -25,32 +30,21 @@ def setup_api():
         raise ValueError("Please set the OPENAI_API_KEY environmental variable.")
     openai_client.api_key = openai_key
 
+
 def check_stdin():
     """Check if there's data being piped to stdin"""
     return not sys.stdin.isatty()
+
 
 def read_stdin():
     """Read all data from stdin"""
     return sys.stdin.read().strip()
 
+
 def interact_with_gpt(messages, stream=False):
+    """Interacts with the GPT model and returns the response."""
     if stream:
-        stream_response = openai_client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
-            stream=True
-        )
-        
-        collected_chunks = []
-        for chunk in stream_response:
-            if chunk.choices[0].delta.content:
-                chunk_content = chunk.choices[0].delta.content
-                print(Fore.YELLOW + chunk_content, end='', flush=True)
-                collected_chunks.append(chunk_content)
-        print()  # New line after streaming completes
-        return ''.join(collected_chunks)
+        return interact_with_gpt_stream(messages)
     else:
         response = openai_client.chat.completions.create(
             model=MODEL,
@@ -60,10 +54,79 @@ def interact_with_gpt(messages, stream=False):
         )
         return response.choices[0].message.content
 
+
+def interact_with_gpt_stream(messages):
+    """Handles streaming responses from the GPT model."""
+    stream_response = openai_client.chat.completions.create(
+        model=MODEL,
+        messages=messages,
+        temperature=TEMPERATURE,
+        max_tokens=MAX_TOKENS,
+        stream=True
+    )
+
+    collected_chunks = []
+    for chunk in stream_response:
+        if chunk.choices[0].delta.content:
+            chunk_content = chunk.choices[0].delta.content
+            print(Fore.YELLOW + chunk_content, end='', flush=True)
+            collected_chunks.append(chunk_content)
+    print()  # New line after streaming completes
+    return ''.join(collected_chunks)
+
+
+def load_history():
+    """Load conversation history from file."""
+    try:
+        with open(HISTORY_FILE, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+
+def save_history(conversation):
+    """Save conversation history to file."""
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(conversation, f)
+
+
+def copy_to_clipboard(text):
+    """Copies the given text to the clipboard."""
+    try:
+        pyperclip.copy(text)
+        print("\nCopied to clipboard!")
+    except pyperclip.PyperclipException:
+        print(Fore.RED + "\nFailed to copy to clipboard. Make sure you have the required dependencies installed." + Style.RESET_ALL)
+
+
+def handle_code_output(args):
+    """Handles the code output mode."""
+    prompt_args = concatenate_arguments(*args.c)
+    input_messages = [{'role': 'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
+    response = interact_with_gpt(messages=input_messages, stream=False)
+    print(Fore.YELLOW + response + Style.RESET_ALL)
+    copy_to_clipboard(response)
+
+
+def handle_conversation(conversation, stream=False):
+    """Handles the conversation with the AI model."""
+    while True:
+        user_input = prompt("You: ", history=InMemoryHistory())
+        if user_input.lower() == 'exit':
+            break
+
+        conversation.append({"role": "user", "content": user_input})
+        print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
+        response = interact_with_gpt(messages=conversation, stream=stream)
+        conversation.append({"role": "assistant", "content": response})
+        save_history(conversation)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", nargs="*", help="Output")
+    parser.add_argument("-c", nargs="*", help="Output code and copy to clipboard")
     parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Enter interactive mode, continuing from previous piped input.")
     parser.add_argument("text", nargs="*", help="Text to send to the AI model")
     args = parser.parse_args()
 
@@ -72,78 +135,39 @@ def main():
         MODEL = MODEL_4
 
     setup_api()
+    conversation = load_history()
 
-    # Check for piped input
+    if args.c:
+        handle_code_output(args)
+        return
+
     stdin_data = None
     if check_stdin():
         stdin_data = read_stdin()
 
-    if args.c:
-        prompt_args = concatenate_arguments(*args.c)
-        input_messages=[{'role':'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
-        response = interact_with_gpt(messages=input_messages, stream=False)
-        print(Fore.YELLOW + response + Style.RESET_ALL)
-        try:
-            pyperclip.copy(response)
-            print("\nCopied to clipboard!")
-        except pyperclip.PyperclipException:
-            print(Fore.RED + "\nFailed to copy to clipboard. Make sure you have the required dependencies installed." + Style.RESET_ALL)
-        return
-
     prompt_args = concatenate_arguments(*args.text)
 
-    # Handle piped input combined with command line arguments
-    if stdin_data:
-        if prompt_args:
-            # Combine stdin data with command line arguments
-            full_prompt = f"{prompt_args}\n\n{stdin_data}"
-        else:
-            full_prompt = stdin_data
-        
-        # Initialize conversation with piped data
-        conversation = [{"role": "user", "content": full_prompt}]
+    if stdin_data or prompt_args:
+        full_prompt = f"{prompt_args}\n\n{stdin_data}" if prompt_args and stdin_data else (prompt_args or stdin_data)
+        conversation.append({"role": "user", "content": full_prompt})
         print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
         response = interact_with_gpt(messages=conversation, stream=True)
         conversation.append({"role": "assistant", "content": response})
-        
-        # Continue with conversation mode
-        print(Fore.YELLOW + f"\nContinuing in conversation mode. Type 'exit' to end the conversation. Using model: {MODEL}" + Style.RESET_ALL)
-        history = InMemoryHistory()
-        
-        # Check if stdin is a TTY before using prompt
-        if sys.stdin.isatty():
-            while True:
-                user_input = prompt("You: ", history=history)
-                if user_input.lower() == 'exit':
-                    break
+        save_history(conversation)
 
-                conversation.append({"role": "user", "content": user_input})
-                print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
-                response = interact_with_gpt(messages=conversation, stream=True)
-                conversation.append({"role": "assistant", "content": response})
+        if not args.interactive:
+            return  # Exit after processing stdin and/or command line args
+
+    if args.interactive:
+        if sys.stdin.isatty():
+            handle_conversation(conversation, stream=True)
         else:
             print(Fore.RED + "No interactive terminal available." + Style.RESET_ALL)
-        
-        return
-
-    if prompt_args:
-        response = interact_with_gpt(messages=[{"role": "user", "content": prompt_args}], stream=False)
-        print(response)
         return
 
     print(Fore.YELLOW + f"Welcome to AI CLI. Type 'exit' to end the conversation. Using model: {MODEL}" + Style.RESET_ALL)
-    
-    conversation = []
-    history = InMemoryHistory()
-    while True:
-        user_input = prompt("You: ", history=history)
-        if user_input.lower() == 'exit':
-            break
+    handle_conversation(conversation, stream=True)
 
-        conversation.append({"role": "user", "content": user_input})
-        print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
-        response = interact_with_gpt(messages=conversation, stream=True)
-        conversation.append({"role": "assistant", "content": response})
 
 if __name__ == "__main__":
     main()
