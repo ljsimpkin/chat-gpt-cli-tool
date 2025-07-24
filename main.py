@@ -126,7 +126,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Output code and copy to clipboard")
     parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
-    parser.add_argument("-i", "--interactive", action="store_true", help="Enter interactive mode, continuing from previous piped input.")
+    parser.add_argument("-r", "--restore", action="store_true", help="Restore conversation, continuing from previous conversation.")
     parser.add_argument("text", nargs="*", help="Text to send to the AI model")
     args = parser.parse_args()
 
