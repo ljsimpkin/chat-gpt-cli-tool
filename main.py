@@ -19,6 +19,19 @@ HISTORY_FILE = ".ai_cli_history.json"
 
 CODE_FLAG = "You are a code generation assistant that only responds with raw code. Respond with the code in plain text format without triple backticks and without comments. Output only the code and nothing else."
 
+CODE_REVIEW_SYSTEM_PROMPT = """You are an expert code reviewer with years of experience in identifying potential issues, security vulnerabilities, and areas for improvement in code. When reviewing code, focus on the following:
+
+*   **Best Practices:** Ensure the code adheres to established coding standards and best practices for the language and framework being used.
+*   **Readability:** Assess the code's clarity and ease of understanding. Suggest improvements to variable names, comments, and overall structure to enhance readability.
+*   **Efficiency:** Analyze the code for potential performance bottlenecks or inefficiencies. Recommend optimizations to improve execution speed and resource utilization.
+*   **Security:** Identify any potential security vulnerabilities, such as SQL injection, cross-site scripting (XSS), or insecure data handling practices.
+*   **Error Handling:** Evaluate the code's robustness in handling errors and exceptions. Suggest improvements to error messages, logging, and recovery mechanisms.
+*   **Maintainability:** Consider the long-term maintainability of the code. Suggest improvements to modularity, testability, and documentation to facilitate future modifications and enhancements.
+*   **Testability:** Ensure the code is easily testable and suggest improvements to facilitate unit testing, integration testing, and other forms of testing.
+*   **Code Style:** Provide feedback on code style, including indentation, spacing, and naming conventions, to ensure consistency and adherence to established guidelines.
+
+Provide specific and actionable recommendations for improving the code based on these criteria. Explain the reasoning behind your suggestions and provide examples where appropriate."""
+
 
 def concatenate_arguments(*args):
     return ' '.join(map(str, args))
@@ -108,8 +121,11 @@ def handle_code_output(args):
     copy_to_clipboard(response)
 
 
-def handle_conversation(conversation, stream=False):
+def handle_conversation(conversation, stream=False, code_review=False):
     """Handles the conversation with the AI model."""
+    if code_review and not conversation:
+        conversation.append({"role": "system", "content": CODE_REVIEW_SYSTEM_PROMPT})
+
     while True:
         user_input = prompt("You: ", history=InMemoryHistory())
         if user_input.lower() == '/exit':
@@ -127,7 +143,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", nargs="*", help="Output code and copy to clipboard")
     parser.add_argument("-m", "--model", action="store_true", help=f"Toggle model to load {MODEL_4}")
-    parser.add_argument("-r", "--restore", action="store_true", help="Restore conversation, continuing from previous conversation.")
+    parser.add_argument("-r", "--restore", action="store_true", help="Restore conversation continuing from previous.")
+    parser.add_argument("-review", "--code_review", action="store_true", help="Apply code review system prompt to piped input.")
     parser.add_argument("text", nargs="*", help="Text to send to the AI model")
     args = parser.parse_args()
 
@@ -136,7 +153,11 @@ def main():
         MODEL = MODEL_4
 
     setup_api()
-    conversation = load_history()
+    conversation = [] # start with a blank conversation
+
+    if args.restore:
+        print(Fore.YELLOW + "Restoring previous conversation..." + Style.RESET_ALL)
+        conversation = load_history() # only load history if interactive
 
     if args.c:
         handle_code_output(args)
@@ -150,18 +171,24 @@ def main():
 
     if stdin_data or prompt_args:
         full_prompt = f"{prompt_args}\n\n{stdin_data}" if prompt_args and stdin_data else (prompt_args or stdin_data)
-        conversation.append({"role": "user", "content": full_prompt})
+        messages = []
+        if args.code_review and not conversation:
+            messages.append({"role": "system", "content": CODE_REVIEW_SYSTEM_PROMPT})
+            conversation.append({"role": "system", "content": CODE_REVIEW_SYSTEM_PROMPT}) # Add to history
+        messages.append({"role": "user", "content": full_prompt})
+
         print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
-        response = interact_with_gpt(messages=conversation, stream=True)
+        response = interact_with_gpt(messages=messages, stream=True)
+        conversation.append({"role": "user", "content": full_prompt})
         conversation.append({"role": "assistant", "content": response})
         save_history(conversation)
 
-        if not args.interactive:
+        if not args.restore:
             return  # Exit after processing stdin and/or command line args
 
-    if args.interactive:
+    if args.restore:
         if sys.stdin.isatty():
-            handle_conversation(conversation, stream=True)
+            handle_conversation(conversation, stream=True, code_review=args.code_review)
         else:
             print(Fore.RED + "No interactive terminal available." + Style.RESET_ALL)
         return
