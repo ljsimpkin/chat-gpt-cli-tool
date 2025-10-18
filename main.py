@@ -58,6 +58,23 @@ def read_stdin():
     return sys.stdin.read().strip()
 
 
+def apply_code_review_prompt(conversation, messages, enabled):
+    """Ensure the code review system prompt is present when requested."""
+    if not enabled:
+        return
+
+    def ensure_prompt(target):
+        if target is None:
+            return
+        for message in target:
+            if message.get("role") == "system" and message.get("content") == CODE_REVIEW_SYSTEM_PROMPT:
+                return
+        target.insert(0, {"role": "system", "content": CODE_REVIEW_SYSTEM_PROMPT})
+
+    ensure_prompt(conversation)
+    ensure_prompt(messages)
+
+
 def interact_with_gpt(messages, stream=False):
     """Interacts with the GPT model and returns the response."""
     if stream:
@@ -116,19 +133,53 @@ def copy_to_clipboard(text):
         print(Fore.RED + "\nFailed to copy to clipboard. Make sure you have the required dependencies installed." + Style.RESET_ALL)
 
 
-def handle_code_output(args):
-    """Handles the code output mode."""
-    prompt_args = concatenate_arguments(*args.c)
-    input_messages = [{'role': 'system', 'content': CODE_FLAG}, {"role": "user", "content": prompt_args}]
-    response = interact_with_gpt(messages=input_messages, stream=False)
-    print(Fore.YELLOW + response + Style.RESET_ALL)
-    copy_to_clipboard(response)
+def process_single_prompt(
+    prompt_text,
+    *,
+    stream,
+    conversation=None,
+    code_review=False,
+    system_prompt=None,
+    copy_result=False,
+    include_history=False,
+    save_history_flag=True,
+    announce_prefix="\nAI: "
+):
+    """Prepare and dispatch a single prompt to the model, updating history as needed."""
+    messages = []
+    if include_history and conversation:
+        messages = list(conversation)
+    else:
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+    apply_code_review_prompt(conversation, messages, code_review)
+    messages.append({"role": "user", "content": prompt_text})
+
+    if stream:
+        if announce_prefix is not None:
+            print(Fore.YELLOW + announce_prefix + Style.RESET_ALL, end='')
+        response = interact_with_gpt(messages=messages, stream=True)
+    else:
+        response = interact_with_gpt(messages=messages, stream=False)
+        if announce_prefix is not None:
+            print(Fore.YELLOW + announce_prefix + Style.RESET_ALL)
+        print(Fore.YELLOW + response + Style.RESET_ALL)
+
+    if conversation is not None:
+        conversation.append({"role": "user", "content": prompt_text})
+        conversation.append({"role": "assistant", "content": response})
+        if save_history_flag:
+            save_history(conversation)
+
+    if copy_result:
+        copy_to_clipboard(response)
+
+    return response
 
 
 def handle_conversation(conversation, stream=False, code_review=False, prompt_session=None):
     """Handles the conversation with the AI model."""
-    if code_review and not conversation:
-        conversation.append({"role": "system", "content": CODE_REVIEW_SYSTEM_PROMPT})
+    apply_code_review_prompt(conversation, None, code_review)
 
     if prompt_session is None:
         prompt_session = PromptSession(history=InMemoryHistory())
@@ -145,11 +196,13 @@ def handle_conversation(conversation, stream=False, code_review=False, prompt_se
             print("Exiting conversation.")
             break
 
-        conversation.append({"role": "user", "content": user_input})
-        print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
-        response = interact_with_gpt(messages=conversation, stream=stream)
-        conversation.append({"role": "assistant", "content": response})
-        save_history(conversation)
+        process_single_prompt(
+            user_input,
+            stream=stream,
+            conversation=conversation,
+            code_review=code_review,
+            include_history=True
+        )
 
 
 def build_prompt_session():
@@ -184,7 +237,15 @@ def main():
         conversation = load_history() # only load history if interactive
 
     if args.c:
-        handle_code_output(args)
+        prompt_args = concatenate_arguments(*args.c)
+        process_single_prompt(
+            prompt_args,
+            stream=False,
+            system_prompt=CODE_FLAG,
+            copy_result=True,
+            announce_prefix=None,
+            save_history_flag=False
+        )
         return
 
     stdin_data = None
@@ -197,17 +258,13 @@ def main():
 
     if stdin_data or prompt_args:
         full_prompt = f"{prompt_args}\n\n{stdin_data}" if prompt_args and stdin_data else (prompt_args or stdin_data)
-        messages = []
-        if args.code_review and not conversation:
-            messages.append({"role": "system", "content": CODE_REVIEW_SYSTEM_PROMPT})
-            conversation.append({"role": "system", "content": CODE_REVIEW_SYSTEM_PROMPT}) # Add to history
-        messages.append({"role": "user", "content": full_prompt})
-
-        print(Fore.YELLOW + "\nAI: " + Style.RESET_ALL, end='')
-        response = interact_with_gpt(messages=messages, stream=True)
-        conversation.append({"role": "user", "content": full_prompt})
-        conversation.append({"role": "assistant", "content": response})
-        save_history(conversation)
+        process_single_prompt(
+            full_prompt,
+            stream=True,
+            conversation=conversation,
+            code_review=args.code_review,
+            include_history=False
+        )
 
         piped_request_handled = True
 
