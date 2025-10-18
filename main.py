@@ -2,8 +2,12 @@ from openai import OpenAI
 import os
 import argparse
 from colorama import Fore, Style
-from prompt_toolkit import prompt
+from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.input import DummyInput
+from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.output import DummyOutput
+from prompt_toolkit.output.defaults import create_output
 import pyperclip
 import sys
 import json  # Import the json module
@@ -121,13 +125,21 @@ def handle_code_output(args):
     copy_to_clipboard(response)
 
 
-def handle_conversation(conversation, stream=False, code_review=False):
+def handle_conversation(conversation, stream=False, code_review=False, prompt_session=None):
     """Handles the conversation with the AI model."""
     if code_review and not conversation:
         conversation.append({"role": "system", "content": CODE_REVIEW_SYSTEM_PROMPT})
 
+    if prompt_session is None:
+        prompt_session = PromptSession(history=InMemoryHistory())
+
     while True:
-        user_input = prompt("You: ", history=InMemoryHistory())
+        try:
+            user_input = prompt_session.prompt("You: ")
+        except (EOFError, KeyboardInterrupt):
+            print("Exiting conversation.")
+            break
+
         normalized_input = user_input.strip().lower()
         if normalized_input in ('/exit', 'exit', 'quit'):
             print("Exiting conversation.")
@@ -138,6 +150,17 @@ def handle_conversation(conversation, stream=False, code_review=False):
         response = interact_with_gpt(messages=conversation, stream=stream)
         conversation.append({"role": "assistant", "content": response})
         save_history(conversation)
+
+
+def build_prompt_session():
+    """Create a prompt session that prefers the active terminal when available."""
+    input_device = create_input(always_prefer_tty=True)
+    output_device = create_output(always_prefer_tty=True)
+
+    if isinstance(input_device, DummyInput) or isinstance(output_device, DummyOutput):
+        return None
+
+    return PromptSession(history=InMemoryHistory(), input=input_device, output=output_device)
 
 
 def main():
@@ -170,6 +193,8 @@ def main():
 
     prompt_args = concatenate_arguments(*args.text)
 
+    piped_request_handled = False
+
     if stdin_data or prompt_args:
         full_prompt = f"{prompt_args}\n\n{stdin_data}" if prompt_args and stdin_data else (prompt_args or stdin_data)
         messages = []
@@ -184,18 +209,30 @@ def main():
         conversation.append({"role": "assistant", "content": response})
         save_history(conversation)
 
-        if not args.restore:
-            return  # Exit after processing stdin and/or command line args
+        piped_request_handled = True
+
+    prompt_session = build_prompt_session()
 
     if args.restore:
-        if sys.stdin.isatty():
-            handle_conversation(conversation, stream=True, code_review=args.code_review)
+        if prompt_session is not None:
+            handle_conversation(conversation, stream=True, code_review=args.code_review, prompt_session=prompt_session)
         else:
             print(Fore.RED + "No interactive terminal available." + Style.RESET_ALL)
         return
 
-    print(Fore.YELLOW + f"Welcome to AI CLI. Type 'exit', 'quit', or '/exit' to end the conversation. Using model: {MODEL}" + Style.RESET_ALL)
-    handle_conversation(conversation, stream=True)
+    if prompt_session is None:
+        if piped_request_handled:
+            print(Fore.RED + "Interactive mode unavailable after processing piped input." + Style.RESET_ALL)
+        else:
+            print(Fore.RED + "No interactive terminal available." + Style.RESET_ALL)
+        return
+
+    if piped_request_handled:
+        print(Fore.YELLOW + "Switching to interactive mode. Type 'exit', 'quit', or '/exit' to finish." + Style.RESET_ALL)
+    else:
+        print(Fore.YELLOW + f"Welcome to AI CLI. Type 'exit', 'quit', or '/exit' to end the conversation. Using model: {MODEL}" + Style.RESET_ALL)
+
+    handle_conversation(conversation, stream=True, prompt_session=prompt_session)
 
 
 if __name__ == "__main__":
