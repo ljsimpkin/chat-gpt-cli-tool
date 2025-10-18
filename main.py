@@ -128,7 +128,8 @@ def handle_conversation(conversation, stream=False, code_review=False):
 
     while True:
         user_input = prompt("You: ", history=InMemoryHistory())
-        if user_input.lower() == '/exit':
+        normalized_input = user_input.strip().lower()
+        if normalized_input in ('/exit', 'exit', 'quit'):
             print("Exiting conversation.")
             break
 
@@ -193,10 +194,9 @@ def main():
             print(Fore.RED + "No interactive terminal available." + Style.RESET_ALL)
         return
 
-    print(Fore.YELLOW + f"Welcome to AI CLI. Type 'exit' to end the conversation. Using model: {MODEL}" + Style.RESET_ALL)
+    print(Fore.YELLOW + f"Welcome to AI CLI. Type 'exit', 'quit', or '/exit' to end the conversation. Using model: {MODEL}" + Style.RESET_ALL)
     handle_conversation(conversation, stream=True)
 
 
 if __name__ == "__main__":
     main()
-
