@@ -1,4 +1,4 @@
-openai
+openai==1.6.1
 argparse
 colorama
 prompt_toolkit
