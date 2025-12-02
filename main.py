@@ -124,13 +124,42 @@ def save_history(conversation):
         json.dump(conversation, f)
 
 
-def copy_to_clipboard(text):
-    """Copies the given text to the clipboard."""
+def copy_to_clipboard_osc52(text):
+    """Copy text to clipboard using OSC 52 escape sequences (works over SSH)"""
+    import base64
     try:
-        pyperclip.copy(text)
-        print("\nCopied to clipboard!")
-    except pyperclip.PyperclipException:
-        print(Fore.RED + "\nFailed to copy to clipboard. Make sure you have the required dependencies installed." + Style.RESET_ALL)
+        encoded = base64.b64encode(text.encode()).decode()
+        osc52_sequence = f"\033]52;c;{encoded}\007"
+        sys.stdout.write(osc52_sequence)
+        sys.stdout.flush()
+        return True
+    except Exception:
+        return False
+
+
+def is_ssh_session():
+    """Check if we're in an SSH session"""
+    return os.environ.get('SSH_CONNECTION') or os.environ.get('SSH_CLIENT') or os.environ.get('SSH_TTY')
+
+
+def smart_copy_to_clipboard(text):
+    """Smart clipboard: use pyperclip locally, OSC 52 over SSH"""
+    in_ssh = is_ssh_session()
+
+    if not in_ssh:
+        # Local session: try pyperclip first (more reliable)
+        try:
+            pyperclip.copy(text)
+            print("\nCopied to clipboard!")
+            return
+        except pyperclip.PyperclipException:
+            pass  # Fall through to OSC 52
+
+    # SSH session OR pyperclip failed: try OSC 52
+    if copy_to_clipboard_osc52(text):
+        print("\nCopied to clipboard!" + (" (via OSC 52)" if in_ssh else ""))
+    else:
+        print(Fore.RED + "\nFailed to copy to clipboard." + Style.RESET_ALL)
 
 
 def process_single_prompt(
@@ -172,7 +201,7 @@ def process_single_prompt(
             save_history(conversation)
 
     if copy_result:
-        copy_to_clipboard(response)
+        smart_copy_to_clipboard(response)
 
     return response
 
